@@ -11,6 +11,10 @@ contract ASTARVesting is AccessControl {
     string public name;
     uint public tge;
 
+    uint public reserveAmount;
+    uint public lastBalanceAfterRelease;
+    uint private totalToken;
+
     uint private beneficiariesAmount;
     mapping(address => uint) private beneficiaries;
     mapping(address => uint) private tgeReleases;
@@ -23,8 +27,9 @@ contract ASTARVesting is AccessControl {
     event Blocked(address beneficiary, string reason);
     event Unblocked(address beneficiary);
 
-    constructor(string memory _name) {
+    constructor(string memory _name, uint _reserveAmount) {
         name = _name;
+        reserveAmount = _reserveAmount;
         _setRoleAdmin(DEPLOYER_ROLE, DEPLOYER_ROLE);
         _setupRole(DEPLOYER_ROLE, msg.sender);
     }
@@ -41,7 +46,7 @@ contract ASTARVesting is AccessControl {
 
     function addBeneficiary(address beneficiary, uint total, uint tgeRelease, uint cliffDuration, uint vestingDuration) public onlyRole(DEPLOYER_ROLE) {
         require(beneficiary != address(0) && beneficiaries[beneficiary] == 0, "The beneficiary is existed");
-        require(token.balanceOf(address(this)) >= total + beneficiariesAmount, "The balance is not enough");
+        require(reserveAmount >= total + beneficiariesAmount, "The balance is not enough");
         require(tgeRelease <= total, "The TGE release is invalid");
 
         tgeReleases[beneficiary] = tgeRelease;
@@ -98,10 +103,14 @@ contract ASTARVesting is AccessControl {
 
     function release(address beneficiary) public {
         require(blockBeneficiaries[beneficiary] == false, "The beneficiary is not exists or blocked");
+
         uint vestableAmount = vestable(beneficiary);
+
         require(vestableAmount > 0, "The is nothing to vest");
 
+        totalToken = getTotalToken();
         released[beneficiary] += vestableAmount;
+        lastBalanceAfterRelease = token.balanceOf(address(this)) - vestableAmount;
 
         bool transfer = token.transfer(beneficiary, vestableAmount);
         require(transfer, "Cannot transfer");
@@ -113,23 +122,34 @@ contract ASTARVesting is AccessControl {
         require(tge > 0, "TGE is not config");
         uint amount = 0;
 
-        if (block.timestamp > tge) {
-            amount = tgeReleases[beneficiary];
-        }
-
-
         if (block.timestamp < tge + cliffDurations[beneficiary]) {
-            return amount - released[beneficiary];
+            amount = tgeReleases[beneficiary];
         } else if (block.timestamp >= (tge + cliffDurations[beneficiary] + vestingDurations[beneficiary])) {
-            return beneficiaries[beneficiary] - released[beneficiary];
+            amount = beneficiaries[beneficiary];
         } else {
             uint vestingAmount = beneficiaries[beneficiary] - tgeReleases[beneficiary];
             uint currentVestingTime = block.timestamp - (tge + cliffDurations[beneficiary]);
 
-            return (((vestingAmount * currentVestingTime) / vestingDurations[beneficiary])) + tgeReleases[beneficiary] - released[beneficiary];
+            amount = (((vestingAmount * currentVestingTime) / vestingDurations[beneficiary])) + tgeReleases[beneficiary];
         }
+        uint _vestable = (amount * getTotalToken() / reserveAmount) - released[beneficiary];
+        return _vestable;
     }
 
+    function getTotalToken() public view returns (uint){
+        uint _curBalance = token.balanceOf(address(this));
+        if (lastBalanceAfterRelease > 0)
+        {
+            if (_curBalance > lastBalanceAfterRelease) {
+                return totalToken + _curBalance - lastBalanceAfterRelease;
+            }
+            return totalToken;
+        }
+        return _curBalance;
+    }
+    /**
+     * Emergency functions
+     */
     function withdrawERC20(address erc20, uint amount) public onlyRole(DEPLOYER_ROLE) {
         require(IERC20(erc20).balanceOf(address(this)) >= amount, "Not enough");
         bool transfer = IERC20(erc20).transfer(msg.sender, amount);

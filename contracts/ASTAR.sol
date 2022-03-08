@@ -18,53 +18,85 @@ abstract contract BPContract {
 
 contract ASTARToken is AccessControl, ERC20, ERC20Snapshot, ERC20Pausable {
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+    bytes32 public constant OPERATION_ROLE = keccak256("OPERATION_ROLE");
 
     bool public isInPreventBotMode;
 
     BPContract public BP;
 
     address constant BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-
     IUniswapV2Router02 constant public uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
+    uint public MAX_SUPPLY = 1000000000 * (10 ** decimals());
     address public pairASTARBUSD;
+    uint public amountIn;
+    uint public amountOut;
+    uint public percentMint;
 
-    constructor() ERC20("Ace Starter", "ASTAR") {
+    address public foundation;
+    address public advisors;
+    address public teams;
+    address public stakeFarming;
+    address public ecosystem;
+    address public marketing;
+    address public liquidity;
+
+    event ReserveMinted(uint amount, uint block);
+    event SetPercentMint(uint percent);
+
+    constructor() ERC20("AceStarter", "ASTAR") {
         IUniswapV2Factory uniswapV2Factory = IUniswapV2Factory(uniswapV2Router.factory());
         pairASTARBUSD = uniswapV2Factory.createPair(address(this), BUSD);
 
         _setRoleAdmin(OWNER_ROLE, OWNER_ROLE);
+        _setRoleAdmin(OPERATION_ROLE, OWNER_ROLE);
         _setupRole(OWNER_ROLE, msg.sender);
 
+        foundation = 0x46CD1D3b37EFCfDbaA09E33f28D567d5292c36Fb;
+        advisors = 0xb640bE83412903EAA0785480D109f784a3d898bE;
+        teams = 0xF11E72aaDa64756C17A3903E6eB1E53aC1f9237a;
+        stakeFarming = 0x60F8Fc3198A604151045B8e42D885A65deE7550B;
+        ecosystem = 0x1ecd22E259a9C6e691b0Ac8689A589d519baBda6;
+        marketing = 0xaE7f3B41839D40F4149489A3c77d126493986Ad6;
+        liquidity = 0x6B721eBDbAcf0B9340Ad54aB5A8A442A21D65E1A;
 
-        // Seed Round | Wait for Vesting Contract Address
-        //        _mint(address(0), 80000000 * (10 ** decimals()));
-
-        // Private Sale | Wait for Vesting Contract Address
-        //        _mint(address(0), 140000000 * (10 ** decimals()));
-
-        // Public Sale | Wait for Vesting Contract Address
-        //        _mint(address(0), 20000000 * (10 ** decimals()));
-
-        // Farming & Staking Rewards | Wait for Vesting Contract Address
-        //        _mint(address(0), 170000000 * (10 ** decimals()));
-
-        // Team & Advisors | Wait for Vesting Contract Address
-        //        _mint(address(0), 200000000 * (10 ** decimals()));
-
-        // Marketing | Wait for Vesting Contract Address
-        //        _mint(address(0), 100000000 * (10 ** decimals()));
-
-        // Partnerships | Wait for Vesting Contract Address
-        //        _mint(address(0), 50000000 * (10 ** decimals()));
-
-        // Liquidity Fund | Wait for Vesting Contract Address
-        //        _mint(address(0), 150000000 * (10 ** decimals()));
-
-        // Ecosystem Funds | Wait for Vesting Contract Address
-        //        _mint(address(0), 90000000 * (10 ** decimals()));
+        // Seed Round
+        _mint(0x3E1B442Ef98bCB5afaF68C37D78aA78747442BAA, 50000000 * (10 ** decimals()));
+        // IDO
+        _mint(0x33f3c03542d73aFdEFDad9B76d9b81F4e563aee0, 50000000 * (10 ** decimals()));
+        // Liquidity
+        _mint(liquidity, 20000000 * (10 ** decimals()));
+    }
+    /**
+     * Operation functions
+     */
+    function mint() external onlyRole(OPERATION_ROLE) {
+        require(percentMint > 0, "ASTAR:: must be config percent mint");
+        if (amountOut > amountIn) {
+            uint amount = (amountOut - amountIn) * percentMint / 1000000;
+            if (totalSupply() + amount > MAX_SUPPLY)
+            {
+                amount -= totalSupply() + amount - MAX_SUPPLY;
+            }
+            require(amount > 0, "ASTAR:: max minted");
+            _mint(foundation, amount * 100000 / 1000000);
+            _mint(advisors, amount * 100000 / 1000000);
+            _mint(teams, amount * 150000 / 1000000);
+            _mint(stakeFarming, amount * 310000 / 1000000);
+            _mint(ecosystem, amount * 90000 / 1000000);
+            _mint(marketing, amount * 100000 / 1000000);
+            _mint(liquidity, amount * 150000 / 1000000);
+            emit ReserveMinted(amount, block.number);
+        }
+        amountIn = 0;
+        amountOut = 0;
     }
 
+    function setPercentMint(uint percent) external onlyRole(OPERATION_ROLE) {
+        require(percent < 1000000, "ASTAR:: invalid percent");
+        percentMint = percent;
+        emit SetPercentMint(percent);
+    }
     /**
      * Utilities functions
      */
@@ -93,7 +125,17 @@ contract ASTARToken is AccessControl, ERC20, ERC20Snapshot, ERC20Pausable {
         if (isInPreventBotMode) {
             BP.protect(from, to, amount);
         }
-
+        if (from == pairASTARBUSD) {
+            amountOut += amount;
+        }
+        if (to == pairASTARBUSD) {
+            amountIn += amount;
+        }
         super._beforeTokenTransfer(from, to, amount);
+    }
+
+    function burn(uint256 amount) public {
+        MAX_SUPPLY -= amount;
+        _burn(msg.sender, amount);
     }
 }
