@@ -117,11 +117,11 @@ contract ASTARToken is AccessControl, ERC20, ERC20Snapshot, ERC20Pausable {
     }
 
     function setBPContract(address _bp) public onlyRole(OWNER_ROLE) {
-        require(address(BP) == address(0), "ASTAR:: unauthorazion");
+        require(address(BP) == address(0), "ASTAR:: unauthorization");
         BP = BPContract(_bp);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal whenNotPaused override(ERC20, ERC20Pausable, ERC20Snapshot) {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Pausable, ERC20Snapshot) {
         if (isInPreventBotMode) {
             BP.protect(from, to, amount);
         }
