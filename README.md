@@ -47,10 +47,10 @@ Beneficiary  | Amount |  Distributed at TGE  | Cliff  | Vesting | Minting Mechan
 Guaranteed Round |  50,000,000 |  100%  |-  | -| Pre-minted
 IDO |    50,000,000 |  100% |  -  | - | Pre-minted
 Liquidity 1   |  20,000,000 | 100%  |  -  | - | Pre-minted
-Liquidity 2  |  132,000,000 | 0  |  -  | -|Based on previous day DEX transactions
-StakeFarming | 272,800,000 | 0 | - | -|Based on previous day DEX transactions
-Ecosystem | 79,200,000 | 0 | - | -|Based on previous day DEX transactions
-Marketing | 88,000,000 | 0 | - | -|Based on previous day DEX transactions
-Foundation | 88,000,000 | 0 | 12 months | 15 months|Based on previous day DEX transactions
-Teams | 132,000,000 | 0 | 12 months | 12 months|Based on previous day DEX transactions
-Advisors | 88,000,000 | 0 | 12 months | 12 months|Based on previous day DEX transactions
+[Liquidity 2](https://bscscan.com/address/0x6B721eBDbAcf0B9340Ad54aB5A8A442A21D65E1A)  |  132,000,000 | 0  |  -  | -|Based on previous day DEX transactions
+[StakeFarming](https://bscscan.com/address/0x60F8Fc3198A604151045B8e42D885A65deE7550B) | 272,800,000 | 0 | - | -|Based on previous day DEX transactions
+[Ecosystem](https://bscscan.com/address/0x1ecd22E259a9C6e691b0Ac8689A589d519baBda6) | 79,200,000 | 0 | - | -|Based on previous day DEX transactions
+[Marketing](https://bscscan.com/address/0xaE7f3B41839D40F4149489A3c77d126493986Ad6) | 88,000,000 | 0 | - | -|Based on previous day DEX transactions
+[Foundation](https://bscscan.com/address/0x46CD1D3b37EFCfDbaA09E33f28D567d5292c36Fb) | 88,000,000 | 0 | 12 months | 15 months|Based on previous day DEX transactions
+[Teams](https://bscscan.com/address/0xF11E72aaDa64756C17A3903E6eB1E53aC1f9237a) | 132,000,000 | 0 | 12 months | 12 months|Based on previous day DEX transactions
+[Advisors](https://bscscan.com/address/0xb640bE83412903EAA0785480D109f784a3d898bE) | 88,000,000 | 0 | 12 months | 12 months|Based on previous day DEX transactions
